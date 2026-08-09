@@ -110,10 +110,10 @@ if (joinButton) {
         coupleSnapshot.data();
 
 
-      if (
-        String(coupleData.code || "").toLowerCase()
-        !== code.toLowerCase()
-      ) {
+ if (
+  String(coupleData.Code || "").trim().toLowerCase()
+  !== code.trim().toLowerCase()
+) {
 
         coupleStatus.textContent =
           "Code incorrect ❤️";
