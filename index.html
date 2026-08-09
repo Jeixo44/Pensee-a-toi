@@ -1,90 +1,420 @@
 <!doctype html>
 <html lang="fr">
+
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#090914">
-  <meta name="description" content="Pensée à toi — une application pour couples à distance.">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#090914"
+  >
+
+  <meta
+    name="description"
+    content="Pensée à toi — une application pour couples à distance."
+  >
+
+  <link
+    rel="manifest"
+    href="manifest.webmanifest"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
   <title>Pensée à toi 💕</title>
 </head>
+
 <body>
+
 <div class="app">
+
+  <!-- EN-TÊTE -->
+
   <header class="top">
-    <button class="icon-btn" id="menuBtn" aria-label="Menu">☰</button>
-    <div>
-      <h1>Pensée à toi <span>♥</span></h1>
-      <p id="partnerLabel">Pour ma chérie 💕</p>
-    </div>
-    <button class="avatar" id="profileBtn" aria-label="Profil">❤️</button>
-  </header>
 
-  <main>
-    <section class="thought-bubble">
-      <div class="cloud">☁️</div>
-      <div><small>À cet instant,</small><strong>je pense à toi...</strong></div>
-      <span>♥</span>
-    </section>
-
-    <button class="think-heart" id="thinkBtn">
-      <span>JE PENSE<br>À TOI</span>
+    <button
+      class="icon-btn"
+      id="menuBtn"
+      aria-label="Menu"
+    >
+      ☰
     </button>
 
-    <section class="quick-grid">
-      <button data-thought="Tu me manques 🥰"><b>🥰</b><span>Tu me manques</span></button>
-      <button data-thought="Je t’envoie un bisou 💋"><b>💋</b><span>Je t’envoie<br>un bisou</span></button>
-      <button data-thought="J’ai envie d’un câlin 🤗"><b>🤗</b><span>J’ai envie<br>d’un câlin</span></button>
+    <div>
+
+      <h1>
+        Pensée à toi
+        <span>♥</span>
+      </h1>
+
+      <p id="partnerLabel">
+        Pour ma chérie 💕
+      </p>
+
+    </div>
+
+    <button
+      class="avatar"
+      id="profileBtn"
+      aria-label="Profil"
+    >
+      ❤️
+    </button>
+
+  </header>
+
+
+  <main>
+
+    <!-- NOTRE COUPLE -->
+
+    <section class="couple-card">
+
+      <h2>💕 Notre couple</h2>
+
+      <p>
+        Entre le code de votre couple pour vous retrouver
+        sur l'application.
+      </p>
+
+      <input
+        id="coupleCodeInput"
+        type="text"
+        maxlength="30"
+        placeholder="Ex : aetuodu44"
+        autocomplete="off"
+      >
+
+      <button
+        class="primary"
+        id="joinCoupleBtn"
+      >
+        Rejoindre notre couple ❤️
+      </button>
+
+      <p id="coupleStatus"></p>
+
     </section>
 
-    <button class="custom" id="customBtn">✏️ <span>Écrire une pensée personnalisée</span> <b>›</b></button>
+
+    <!-- BULLE DE PENSÉE -->
+
+    <section class="thought-bubble">
+
+      <div class="cloud">
+        ☁️
+      </div>
+
+      <div>
+
+        <small>
+          À cet instant,
+        </small>
+
+        <strong>
+          je pense à toi...
+        </strong>
+
+      </div>
+
+      <span>
+        ♥
+      </span>
+
+    </section>
+
+
+    <!-- BOUTON PRINCIPAL -->
+
+    <button
+      class="think-heart"
+      id="thinkBtn"
+    >
+
+      <span>
+        JE PENSE<br>
+        À TOI
+      </span>
+
+    </button>
+
+
+    <!-- PENSÉES RAPIDES -->
+
+    <section class="quick-grid">
+
+      <button
+        data-thought="Tu me manques 🥰"
+      >
+
+        <b>
+          🥰
+        </b>
+
+        <span>
+          Tu me manques
+        </span>
+
+      </button>
+
+
+      <button
+        data-thought="Je t’envoie un bisou 💋"
+      >
+
+        <b>
+          💋
+        </b>
+
+        <span>
+          Je t’envoie<br>
+          un bisou
+        </span>
+
+      </button>
+
+
+      <button
+        data-thought="J’ai envie d’un câlin 🤗"
+      >
+
+        <b>
+          🤗
+        </b>
+
+        <span>
+          J’ai envie<br>
+          d’un câlin
+        </span>
+
+      </button>
+
+    </section>
+
+
+    <!-- PENSÉE PERSONNALISÉE -->
+
+    <button
+      class="custom"
+      id="customBtn"
+    >
+
+      ✏️
+
+      <span>
+        Écrire une pensée personnalisée
+      </span>
+
+      <b>
+        ›
+      </b>
+
+    </button>
+
+
+    <!-- COMPTE À REBOURS -->
 
     <section class="countdown">
-      <h3>♥ NOS RETROUVAILLES DANS ♥</h3>
-      <div id="countdownValue">Ajoute une date dans « Nous »</div>
+
+      <h3>
+        ♥ NOS RETROUVAILLES DANS ♥
+      </h3>
+
+      <div id="countdownValue">
+        Ajoute une date dans « Nous »
+      </div>
+
     </section>
+
+
+    <!-- DERNIÈRES PENSÉES -->
 
     <section>
-      <h3 class="section-title">♥ DERNIÈRES PENSÉES</h3>
-      <div id="thoughtList" class="thought-list"></div>
+
+      <h3 class="section-title">
+        ♥ DERNIÈRES PENSÉES
+      </h3>
+
+      <div
+        id="thoughtList"
+        class="thought-list"
+      ></div>
+
     </section>
+
   </main>
 
+
+  <!-- NAVIGATION -->
+
   <nav class="bottom-nav">
-    <button class="active" data-tab="home">⌂<small>Accueil</small></button>
-    <button data-tab="thoughts">♡<small>Pensées</small></button>
-    <button class="plus" id="plusBtn">+</button>
-    <button data-tab="memories">▧<small>Souvenirs</small></button>
-    <button data-tab="us">♡<small>Nous</small></button>
+
+    <button
+      class="active"
+      data-tab="home"
+    >
+      ⌂
+      <small>
+        Accueil
+      </small>
+    </button>
+
+
+    <button
+      data-tab="thoughts"
+    >
+      ♡
+      <small>
+        Pensées
+      </small>
+    </button>
+
+
+    <button
+      class="plus"
+      id="plusBtn"
+    >
+      +
+    </button>
+
+
+    <button
+      data-tab="memories"
+    >
+      ▧
+      <small>
+        Souvenirs
+      </small>
+    </button>
+
+
+    <button
+      data-tab="us"
+    >
+      ♡
+      <small>
+        Nous
+      </small>
+    </button>
+
   </nav>
+
 </div>
 
-<div class="modal hidden" id="modal">
+
+<!-- FENÊTRE POUR ÉCRIRE UNE PENSÉE -->
+
+<div
+  class="modal hidden"
+  id="modal"
+>
+
   <div class="modal-card">
-    <button class="close" id="closeModal">×</button>
-    <h2 id="modalTitle">Une pensée pour elle 💕</h2>
-    <textarea id="thoughtText" maxlength="280" placeholder="Écris ce que tu ressens..."></textarea>
-    <button class="primary" id="sendThought">Envoyer la pensée ❤️</button>
+
+    <button
+      class="close"
+      id="closeModal"
+    >
+      ×
+    </button>
+
+
+    <h2 id="modalTitle">
+      Une pensée pour elle 💕
+    </h2>
+
+
+    <textarea
+      id="thoughtText"
+      maxlength="280"
+      placeholder="Écris ce que tu ressens..."
+    ></textarea>
+
+
+    <button
+      class="primary"
+      id="sendThought"
+    >
+      Envoyer la pensée ❤️
+    </button>
+
   </div>
+
 </div>
 
-<div class="toast" id="toast"></div>
-<div class="hearts" id="hearts"></div>
+
+<!-- MESSAGE TEMPORAIRE -->
+
+<div
+  class="toast"
+  id="toast"
+></div>
+
+
+<!-- ANIMATION DES COEURS -->
+
+<div
+  class="hearts"
+  id="hearts"
+></div>
+
+
+<!-- FIREBASE -->
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
 
   const firebaseConfig = {
-    apiKey: "AIzaSyAAf1CFU2T98ASCFKxPQKEwWg4CcE1u1xI",
-    authDomain: "penseeatoi-fb1eb.firebaseapp.com",
-    projectId: "penseeatoi-fb1eb",
-    storageBucket: "penseeatoi-fb1eb.firebasestorage.app",
-    messagingSenderId: "370911297190",
-    appId: "1:370911297190:web:89a492c03196e1e3233e67"
+
+    apiKey:
+      "AIzaSyAAf1CFU2T98ASCFKxPQKEwWg4CcE1u1xI",
+
+    authDomain:
+      "penseeatoi-fb1eb.firebaseapp.com",
+
+    projectId:
+      "penseeatoi-fb1eb",
+
+    storageBucket:
+      "penseeatoi-fb1eb.firebasestorage.app",
+
+    messagingSenderId:
+      "370911297190",
+
+    appId:
+      "1:370911297190:web:89a492c03196e1e3233e67"
+
   };
 
-  const app = initializeApp(firebaseConfig);
-  window.firebaseApp = app;
+
+  const app =
+    initializeApp(firebaseConfig);
+
+
+  window.firebaseApp =
+    app;
+
 </script>
-<script type="module" src="app.js"></script>
+
+
+<!-- APPLICATION -->
+
+<script
+  type="module"
+  src="app.js"
+></script>
+
 </body>
 </html>
