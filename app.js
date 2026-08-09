@@ -9,7 +9,17 @@ let thoughts = [];
 let reunion = localStorage.getItem("pat_reunion");
 
 const COUPLE_ID = "couple1";
-const SENDER = "Vincent";
+let SENDER = localStorage.getItem("pat_sender");
+
+if (!SENDER) {
+  SENDER = prompt("Qui es-tu ?\n\nÉcris Vincent ou Ma chérie");
+
+  if (SENDER !== "Vincent" && SENDER !== "Ma chérie") {
+    SENDER = "Vincent";
+  }
+
+  localStorage.setItem("pat_sender", SENDER);
+}
 
 // Firebase
 import {
