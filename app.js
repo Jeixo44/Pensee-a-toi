@@ -48,10 +48,13 @@ const db = getFirestore(window.firebaseApp);
 const auth = getAuth(window.firebaseApp);
 
 
-// Authentification anonyme
+// ==============================
+// AUTHENTIFICATION
+// ==============================
+
 const authReady = signInAnonymously(auth)
   .then(() => {
-    console.log("Utilisateur Firebase connecté");
+    console.log("Firebase : utilisateur connecté");
   })
   .catch(error => {
     console.error("Erreur authentification :", error);
@@ -60,7 +63,7 @@ const authReady = signInAnonymously(auth)
 
 
 // ==============================
-// REJOINDRE UN COUPLE
+// REJOINDRE LE COUPLE
 // ==============================
 
 const joinButton = $("#joinCoupleBtn");
@@ -88,19 +91,33 @@ if (joinButton) {
       await authReady;
 
 
-      // Pour notre première version,
-      // nous vérifions le code dans couple1.
+      console.log(
+        "Recherche Firestore : couples/couple1"
+      );
+
+
       const coupleRef =
         doc(db, "couples", "couple1");
+
 
       const coupleSnapshot =
         await getDoc(coupleRef);
 
 
+      console.log(
+        "Document trouvé :",
+        coupleSnapshot.exists()
+      );
+
+
       if (!coupleSnapshot.exists()) {
 
+        console.error(
+          "Le document couples/couple1 est introuvable."
+        );
+
         coupleStatus.textContent =
-          "Ce couple n'existe pas.";
+          "Le document couple1 est introuvable dans Firestore.";
 
         return;
       }
@@ -110,10 +127,33 @@ if (joinButton) {
         coupleSnapshot.data();
 
 
- if (
-  String(coupleData.Code || "").trim().toLowerCase()
-  !== code.trim().toLowerCase()
-) {
+      console.log(
+        "Données du couple :",
+        coupleData
+      );
+
+
+      // Ton champ Firestore s'appelle "Code"
+      const firestoreCode =
+        String(coupleData.Code || "").trim();
+
+
+      console.log(
+        "Code Firestore :",
+        firestoreCode
+      );
+
+
+      console.log(
+        "Code entré :",
+        code
+      );
+
+
+      if (
+        firestoreCode.toLowerCase()
+        !== code.toLowerCase()
+      ) {
 
         coupleStatus.textContent =
           "Code incorrect ❤️";
@@ -125,10 +165,20 @@ if (joinButton) {
       // Code correct
       COUPLE_ID = "couple1";
 
+
       localStorage.setItem(
         "pat_couple_id",
         COUPLE_ID
       );
+
+
+      // Afficher les noms du couple
+      if (coupleData.Partner1) {
+
+        $("#partnerLabel").textContent =
+          `${coupleData.Partner1} ❤️ ${coupleData.Partner2 || ""}`;
+
+      }
 
 
       coupleStatus.textContent =
@@ -140,18 +190,20 @@ if (joinButton) {
       );
 
 
-      // Recharge les pensées
       startThoughtListener();
+
 
     } catch (error) {
 
       console.error(
-        "Erreur rejoindre couple :",
+        "Erreur complète :",
         error
       );
 
+
       coupleStatus.textContent =
-        "Impossible de rejoindre le couple.";
+        "Erreur de connexion à Firebase.";
+
     }
 
   };
@@ -208,7 +260,7 @@ function escapeHtml(s) {
 
 
 // ==============================
-// AFFICHER LES PENSEES
+// AFFICHAGE
 // ==============================
 
 function render() {
@@ -233,7 +285,9 @@ function render() {
                 </b>
 
                 <small>
-                  ${t.sender ? escapeHtml(t.sender) + " · " : ""}
+                  ${t.sender
+                    ? escapeHtml(t.sender) + " · "
+                    : ""}
                   ${timeAgo(t.ts)}
                 </small>
 
@@ -271,7 +325,7 @@ function render() {
 
 
 // ==============================
-// TOAST
+// MESSAGE
 // ==============================
 
 function showToast(s) {
@@ -482,7 +536,7 @@ function startThoughtListener() {
 
 
 // ==============================
-// BOUTON JE PENSE A TOI
+// BOUTON PRINCIPAL
 // ==============================
 
 $("#thinkBtn").onclick =
@@ -570,9 +624,7 @@ modal.addEventListener(
   "click",
   e => {
 
-    if (
-      e.target === modal
-    ) {
+    if (e.target === modal) {
 
       modal.classList.add(
         "hidden"
@@ -601,8 +653,7 @@ function countdown() {
 
 
   const n =
-    new Date(reunion)
-    - Date.now();
+    new Date(reunion) - Date.now();
 
 
   if (n <= 0) {
@@ -648,7 +699,6 @@ setInterval(
   countdown,
   1000
 );
-
 
 countdown();
 
