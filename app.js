@@ -8,7 +8,7 @@ const text = $("#thoughtText");
 let thoughts = [];
 let reunion = localStorage.getItem("pat_reunion");
 
-const COUPLE_ID = "couple1";
+let COUPLE_ID = localStorage.getItem("pat_couple_id") || "couple1";
 
 let SENDER = localStorage.getItem("pat_sender");
 
@@ -33,7 +33,9 @@ import {
   addDoc,
   onSnapshot,
   query,
-  orderBy
+  orderBy,
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
@@ -41,11 +43,12 @@ import {
   signInAnonymously
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+
 const db = getFirestore(window.firebaseApp);
 const auth = getAuth(window.firebaseApp);
 
 
-// Connexion anonyme Firebase
+// Authentification anonyme
 const authReady = signInAnonymously(auth)
   .then(() => {
     console.log("Utilisateur Firebase connecté");
@@ -57,13 +60,122 @@ const authReady = signInAnonymously(auth)
 
 
 // ==============================
-// AFFICHAGE DU TEMPS
+// REJOINDRE UN COUPLE
+// ==============================
+
+const joinButton = $("#joinCoupleBtn");
+const codeInput = $("#coupleCodeInput");
+const coupleStatus = $("#coupleStatus");
+
+
+if (joinButton) {
+
+  joinButton.onclick = async () => {
+
+    const code = codeInput.value.trim();
+
+    if (!code) {
+      coupleStatus.textContent =
+        "Entre le code de votre couple ❤️";
+      return;
+    }
+
+    try {
+
+      coupleStatus.textContent =
+        "Vérification du code...";
+
+      await authReady;
+
+
+      // Pour notre première version,
+      // nous vérifions le code dans couple1.
+      const coupleRef =
+        doc(db, "couples", "couple1");
+
+      const coupleSnapshot =
+        await getDoc(coupleRef);
+
+
+      if (!coupleSnapshot.exists()) {
+
+        coupleStatus.textContent =
+          "Ce couple n'existe pas.";
+
+        return;
+      }
+
+
+      const coupleData =
+        coupleSnapshot.data();
+
+
+      if (
+        String(coupleData.code || "").toLowerCase()
+        !== code.toLowerCase()
+      ) {
+
+        coupleStatus.textContent =
+          "Code incorrect ❤️";
+
+        return;
+      }
+
+
+      // Code correct
+      COUPLE_ID = "couple1";
+
+      localStorage.setItem(
+        "pat_couple_id",
+        COUPLE_ID
+      );
+
+
+      coupleStatus.textContent =
+        "Couple connecté ❤️";
+
+
+      showToast(
+        "Bienvenue dans votre couple ❤️"
+      );
+
+
+      // Recharge les pensées
+      startThoughtListener();
+
+    } catch (error) {
+
+      console.error(
+        "Erreur rejoindre couple :",
+        error
+      );
+
+      coupleStatus.textContent =
+        "Impossible de rejoindre le couple.";
+    }
+
+  };
+
+}
+
+
+// ==============================
+// TEMPS
 // ==============================
 
 function timeAgo(ts) {
-  const d = ts instanceof Date ? ts : new Date(ts);
-  const now = new Date();
-  const m = Math.floor((now - d) / 60000);
+
+  const d =
+    ts instanceof Date
+      ? ts
+      : new Date(ts);
+
+  const now =
+    new Date();
+
+  const m =
+    Math.floor((now - d) / 60000);
+
 
   return m < 1
     ? "À l’instant"
@@ -80,13 +192,18 @@ function timeAgo(ts) {
 // ==============================
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, m => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  }[m]));
+
+  return String(s).replace(
+    /[&<>"']/g,
+    m => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[m])
+  );
+
 }
 
 
@@ -96,79 +213,133 @@ function escapeHtml(s) {
 
 function render() {
 
-  list.innerHTML = thoughts.length
-    ? thoughts.slice(0, 8).map(t => `
-      <div class="thought-item">
-        <span class="heart">💗</span>
+  list.innerHTML =
+    thoughts.length
 
-        <div>
-          <b>${escapeHtml(t.text)}</b>
-          <small>${timeAgo(t.ts)}</small>
+      ? thoughts
+          .slice(0, 8)
+          .map(t => `
+
+            <div class="thought-item">
+
+              <span class="heart">
+                💗
+              </span>
+
+              <div>
+
+                <b>
+                  ${escapeHtml(t.text)}
+                </b>
+
+                <small>
+                  ${t.sender ? escapeHtml(t.sender) + " · " : ""}
+                  ${timeAgo(t.ts)}
+                </small>
+
+              </div>
+
+            </div>
+
+          `)
+          .join("")
+
+      : `
+
+        <div class="thought-item">
+
+          <span class="heart">
+            💭
+          </span>
+
+          <div>
+
+            <b>
+              Aucune pensée pour le moment
+            </b>
+
+            <small>
+              Envoie la première ❤️
+            </small>
+
+          </div>
+
         </div>
-      </div>
-    `).join("")
 
-    : `
-      <div class="thought-item">
-        <span class="heart">💭</span>
-
-        <div>
-          <b>Aucune pensée pour le moment</b>
-          <small>Envoie la première ❤️</small>
-        </div>
-      </div>
-    `;
+      `;
 }
 
 
 // ==============================
-// MESSAGE TEMPORAIRE
+// TOAST
 // ==============================
 
 function showToast(s) {
-  toast.textContent = s;
+
+  toast.textContent =
+    s;
+
   toast.classList.add("show");
 
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2200);
+  setTimeout(
+    () => toast.classList.remove("show"),
+    2200
+  );
+
 }
 
 
 // ==============================
-// ANIMATION DES COEURS
+// COEURS
 // ==============================
 
 function popHearts() {
 
-  for (let i = 0; i < 14; i++) {
+  for (
+    let i = 0;
+    i < 14;
+    i++
+  ) {
 
-    const h = document.createElement("span");
+    const h =
+      document.createElement("span");
 
-    h.className = "heart-pop";
+    h.className =
+      "heart-pop";
 
-    h.textContent = [
-      "❤️",
-      "💕",
-      "💗",
-      "💖"
-    ][i % 4];
+    h.textContent =
+      [
+        "❤️",
+        "💕",
+        "💗",
+        "💖"
+      ][i % 4];
+
 
     h.style.left =
       (35 + Math.random() * 30) + "%";
 
+
     h.style.top =
       (42 + Math.random() * 12) + "%";
+
 
     h.style.setProperty(
       "--x",
       (Math.random() * 180 - 90) + "px"
     );
 
+
     $("#hearts").appendChild(h);
 
-    setTimeout(() => h.remove(), 1500);
+
+    setTimeout(
+      () => h.remove(),
+      1500
+    );
+
   }
+
 }
 
 
@@ -180,9 +351,8 @@ async function addThought(t) {
 
   try {
 
-    // Attend que Firebase Authentication
-    // soit terminée avant d'écrire dans Firestore.
     await authReady;
+
 
     await addDoc(
       collection(
@@ -191,6 +361,7 @@ async function addThought(t) {
         COUPLE_ID,
         "thoughts"
       ),
+
       {
         text: t,
         sender: SENDER,
@@ -198,86 +369,130 @@ async function addThought(t) {
       }
     );
 
-    showToast("Pensée envoyée ❤️");
+
+    showToast(
+      "Pensée envoyée ❤️"
+    );
+
 
     popHearts();
 
   } catch (error) {
 
     console.error(
-      "Erreur lors de l'envoi de la pensée :",
+      "Erreur lors de l'envoi :",
       error
     );
+
 
     showToast(
       "Impossible d’envoyer la pensée"
     );
+
   }
+
 }
 
 
 // ==============================
-// ECOUTER LES PENSEES EN TEMPS REEL
+// PENSEES EN TEMPS REEL
 // ==============================
 
-const thoughtsQuery = query(
-  collection(
-    db,
-    "couples",
-    COUPLE_ID,
-    "thoughts"
-  ),
-  orderBy("createdAt", "desc")
-);
+let unsubscribeThoughts = null;
 
-onSnapshot(
-  thoughtsQuery,
 
-  snapshot => {
+function startThoughtListener() {
 
-    thoughts = snapshot.docs.map(doc => {
-
-      const data = doc.data();
-
-      return {
-        text: data.text || "",
-        sender: data.sender || "",
-
-        ts: data.createdAt?.toDate
-          ? data.createdAt.toDate()
-          : new Date()
-      };
-
-    });
-
-    render();
-  },
-
-  error => {
-
-    console.error(
-      "Erreur de lecture Firestore :",
-      error
-    );
-
-    showToast(
-      "Impossible de charger les pensées"
-    );
+  if (unsubscribeThoughts) {
+    unsubscribeThoughts();
   }
-);
+
+
+  const thoughtsQuery =
+    query(
+      collection(
+        db,
+        "couples",
+        COUPLE_ID,
+        "thoughts"
+      ),
+
+      orderBy(
+        "createdAt",
+        "desc"
+      )
+    );
+
+
+  unsubscribeThoughts =
+    onSnapshot(
+
+      thoughtsQuery,
+
+      snapshot => {
+
+        thoughts =
+          snapshot.docs.map(
+            doc => {
+
+              const data =
+                doc.data();
+
+
+              return {
+
+                text:
+                  data.text || "",
+
+                sender:
+                  data.sender || "",
+
+                ts:
+                  data.createdAt?.toDate
+                    ? data.createdAt.toDate()
+                    : new Date()
+
+              };
+
+            }
+          );
+
+
+        render();
+
+      },
+
+      error => {
+
+        console.error(
+          "Erreur Firestore :",
+          error
+        );
+
+
+        showToast(
+          "Impossible de charger les pensées"
+        );
+
+      }
+
+    );
+
+}
 
 
 // ==============================
-// BOUTON PRINCIPAL
+// BOUTON JE PENSE A TOI
 // ==============================
 
-$("#thinkBtn").onclick = () => {
+$("#thinkBtn").onclick =
+  () => {
 
-  addThought(
-    "Je pense à toi ❤️"
-  );
+    addThought(
+      "Je pense à toi ❤️"
+    );
 
-};
+  };
 
 
 // ==============================
@@ -288,13 +503,14 @@ document
   .querySelectorAll("[data-thought]")
   .forEach(b => {
 
-    b.onclick = () => {
+    b.onclick =
+      () => {
 
-      addThought(
-        b.dataset.thought
-      );
+        addThought(
+          b.dataset.thought
+        );
 
-    };
+      };
 
   });
 
@@ -304,43 +520,64 @@ document
 // ==============================
 
 $("#customBtn").onclick =
-$("#plusBtn").onclick = () => {
+$("#plusBtn").onclick =
+  () => {
 
-  modal.classList.remove("hidden");
+    modal.classList.remove(
+      "hidden"
+    );
 
-  text.focus();
+    text.focus();
 
-};
-
-
-$("#closeModal").onclick = () => {
-
-  modal.classList.add("hidden");
-
-};
+  };
 
 
-$("#sendThought").onclick = () => {
+$("#closeModal").onclick =
+  () => {
 
-  const v = text.value.trim();
+    modal.classList.add(
+      "hidden"
+    );
 
-  if (!v) return;
+  };
 
-  addThought(v);
 
-  text.value = "";
+$("#sendThought").onclick =
+  () => {
 
-  modal.classList.add("hidden");
+    const v =
+      text.value.trim();
 
-};
+
+    if (!v) return;
+
+
+    addThought(v);
+
+
+    text.value =
+      "";
+
+
+    modal.classList.add(
+      "hidden"
+    );
+
+  };
 
 
 modal.addEventListener(
   "click",
   e => {
 
-    if (e.target === modal) {
-      modal.classList.add("hidden");
+    if (
+      e.target === modal
+    ) {
+
+      modal.classList.add(
+        "hidden"
+      );
+
     }
 
   }
@@ -359,11 +596,13 @@ function countdown() {
       "Ajoute une date dans « Nous »";
 
     return;
+
   }
 
 
   const n =
-    new Date(reunion) - Date.now();
+    new Date(reunion)
+    - Date.now();
 
 
   if (n <= 0) {
@@ -372,6 +611,7 @@ function countdown() {
       "C’est le jour des retrouvailles ❤️";
 
     return;
+
   }
 
 
@@ -382,10 +622,14 @@ function countdown() {
     Math.floor(s / 86400);
 
   const h =
-    Math.floor((s % 86400) / 3600);
+    Math.floor(
+      (s % 86400) / 3600
+    );
 
   const m =
-    Math.floor((s % 3600) / 60);
+    Math.floor(
+      (s % 3600) / 60
+    );
 
   const sec =
     s % 60;
@@ -396,6 +640,7 @@ function countdown() {
     `${String(h).padStart(2, "0")} h · ` +
     `${String(m).padStart(2, "0")} min · ` +
     `${String(sec).padStart(2, "0")} s`;
+
 }
 
 
@@ -404,63 +649,78 @@ setInterval(
   1000
 );
 
+
 countdown();
 
 render();
 
 
 // ==============================
-// AUTRES BOUTONS
+// NAVIGATION
 // ==============================
 
 document
   .querySelectorAll("[data-tab]")
   .forEach(b => {
 
-    b.onclick = () => {
+    b.onclick =
+      () => {
 
-      showToast(
-        "Cette section arrive dans la prochaine version 💕"
-      );
+        showToast(
+          "Cette section arrive dans la prochaine version 💕"
+        );
 
-    };
+      };
 
   });
 
 
-$("#menuBtn").onclick = () => {
+$("#menuBtn").onclick =
+  () => {
 
-  showToast(
-    "Menu — bientôt disponible"
-  );
+    showToast(
+      "Menu — bientôt disponible"
+    );
 
-};
+  };
 
 
-$("#profileBtn").onclick = () => {
+$("#profileBtn").onclick =
+  () => {
 
-  showToast(
-    "Profil — bientôt disponible"
-  );
+    showToast(
+      "Profil — bientôt disponible"
+    );
 
-};
+  };
 
 
 // ==============================
 // SERVICE WORKER
 // ==============================
 
-if ("serviceWorker" in navigator) {
+if (
+  "serviceWorker" in navigator
+) {
 
   navigator.serviceWorker
     .register("sw.js")
-    .catch(error => {
+    .catch(
+      error => {
 
-      console.error(
-        "Erreur Service Worker :",
-        error
-      );
+        console.error(
+          "Erreur Service Worker :",
+          error
+        );
 
-    });
+      }
+    );
 
-  }
+}
+
+
+// ==============================
+// DEMARRAGE
+// ==============================
+
+startThoughtListener();
