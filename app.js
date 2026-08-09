@@ -9,6 +9,7 @@ let thoughts = [];
 let reunion = localStorage.getItem("pat_reunion");
 
 const COUPLE_ID = "couple1";
+
 let SENDER = localStorage.getItem("pat_sender");
 
 if (!SENDER) {
@@ -21,7 +22,11 @@ if (!SENDER) {
   localStorage.setItem("pat_sender", SENDER);
 }
 
-// Firebase
+
+// ==============================
+// FIREBASE
+// ==============================
+
 import {
   getFirestore,
   collection,
@@ -39,13 +44,21 @@ import {
 const db = getFirestore(window.firebaseApp);
 const auth = getAuth(window.firebaseApp);
 
-signInAnonymously(auth)
+
+// Connexion anonyme Firebase
+const authReady = signInAnonymously(auth)
   .then(() => {
     console.log("Utilisateur Firebase connecté");
   })
   .catch(error => {
     console.error("Erreur authentification :", error);
+    throw error;
   });
+
+
+// ==============================
+// AFFICHAGE DU TEMPS
+// ==============================
 
 function timeAgo(ts) {
   const d = ts instanceof Date ? ts : new Date(ts);
@@ -61,6 +74,11 @@ function timeAgo(ts) {
         : d.toLocaleDateString("fr-FR");
 }
 
+
+// ==============================
+// SECURITE HTML
+// ==============================
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({
     "&": "&amp;",
@@ -71,20 +89,29 @@ function escapeHtml(s) {
   }[m]));
 }
 
+
+// ==============================
+// AFFICHER LES PENSEES
+// ==============================
+
 function render() {
+
   list.innerHTML = thoughts.length
     ? thoughts.slice(0, 8).map(t => `
       <div class="thought-item">
         <span class="heart">💗</span>
+
         <div>
           <b>${escapeHtml(t.text)}</b>
           <small>${timeAgo(t.ts)}</small>
         </div>
       </div>
     `).join("")
+
     : `
       <div class="thought-item">
         <span class="heart">💭</span>
+
         <div>
           <b>Aucune pensée pour le moment</b>
           <small>Envoie la première ❤️</small>
@@ -93,20 +120,50 @@ function render() {
     `;
 }
 
+
+// ==============================
+// MESSAGE TEMPORAIRE
+// ==============================
+
 function showToast(s) {
   toast.textContent = s;
   toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 2200);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2200);
 }
 
+
+// ==============================
+// ANIMATION DES COEURS
+// ==============================
+
 function popHearts() {
+
   for (let i = 0; i < 14; i++) {
+
     const h = document.createElement("span");
+
     h.className = "heart-pop";
-    h.textContent = ["❤️", "💕", "💗", "💖"][i % 4];
-    h.style.left = (35 + Math.random() * 30) + "%";
-    h.style.top = (42 + Math.random() * 12) + "%";
-    h.style.setProperty("--x", (Math.random() * 180 - 90) + "px");
+
+    h.textContent = [
+      "❤️",
+      "💕",
+      "💗",
+      "💖"
+    ][i % 4];
+
+    h.style.left =
+      (35 + Math.random() * 30) + "%";
+
+    h.style.top =
+      (42 + Math.random() * 12) + "%";
+
+    h.style.setProperty(
+      "--x",
+      (Math.random() * 180 - 90) + "px"
+    );
 
     $("#hearts").appendChild(h);
 
@@ -114,11 +171,26 @@ function popHearts() {
   }
 }
 
-// Envoie une pensée dans Firestore
+
+// ==============================
+// ENVOYER UNE PENSEE
+// ==============================
+
 async function addThought(t) {
+
   try {
+
+    // Attend que Firebase Authentication
+    // soit terminée avant d'écrire dans Firestore.
+    await authReady;
+
     await addDoc(
-      collection(db, "couples", COUPLE_ID, "thoughts"),
+      collection(
+        db,
+        "couples",
+        COUPLE_ID,
+        "thoughts"
+      ),
       {
         text: t,
         sender: SENDER,
@@ -127,57 +199,129 @@ async function addThought(t) {
     );
 
     showToast("Pensée envoyée ❤️");
+
     popHearts();
+
   } catch (error) {
-    console.error(error);
-    showToast("Impossible d’envoyer la pensée");
+
+    console.error(
+      "Erreur lors de l'envoi de la pensée :",
+      error
+    );
+
+    showToast(
+      "Impossible d’envoyer la pensée"
+    );
   }
 }
 
-// Écoute les pensées en temps réel
+
+// ==============================
+// ECOUTER LES PENSEES EN TEMPS REEL
+// ==============================
+
 const thoughtsQuery = query(
-  collection(db, "couples", COUPLE_ID, "thoughts"),
+  collection(
+    db,
+    "couples",
+    COUPLE_ID,
+    "thoughts"
+  ),
   orderBy("createdAt", "desc")
 );
 
-onSnapshot(thoughtsQuery, snapshot => {
-  thoughts = snapshot.docs.map(doc => {
-    const data = doc.data();
+onSnapshot(
+  thoughtsQuery,
 
-    return {
-      text: data.text || "",
-      sender: data.sender || "",
-      ts: data.createdAt?.toDate
-        ? data.createdAt.toDate()
-        : new Date()
+  snapshot => {
+
+    thoughts = snapshot.docs.map(doc => {
+
+      const data = doc.data();
+
+      return {
+        text: data.text || "",
+        sender: data.sender || "",
+
+        ts: data.createdAt?.toDate
+          ? data.createdAt.toDate()
+          : new Date()
+      };
+
+    });
+
+    render();
+  },
+
+  error => {
+
+    console.error(
+      "Erreur de lecture Firestore :",
+      error
+    );
+
+    showToast(
+      "Impossible de charger les pensées"
+    );
+  }
+);
+
+
+// ==============================
+// BOUTON PRINCIPAL
+// ==============================
+
+$("#thinkBtn").onclick = () => {
+
+  addThought(
+    "Je pense à toi ❤️"
+  );
+
+};
+
+
+// ==============================
+// PENSEES RAPIDES
+// ==============================
+
+document
+  .querySelectorAll("[data-thought]")
+  .forEach(b => {
+
+    b.onclick = () => {
+
+      addThought(
+        b.dataset.thought
+      );
+
     };
+
   });
 
-  render();
-});
 
-// Bouton principal
-$("#thinkBtn").onclick = () => {
-  addThought("Je pense à toi ❤️");
-};
+// ==============================
+// PENSEE PERSONNALISEE
+// ==============================
 
-// Pensées rapides
-document.querySelectorAll("[data-thought]").forEach(b => {
-  b.onclick = () => addThought(b.dataset.thought);
-});
-
-// Pensée personnalisée
 $("#customBtn").onclick =
 $("#plusBtn").onclick = () => {
+
   modal.classList.remove("hidden");
+
   text.focus();
+
 };
+
 
 $("#closeModal").onclick = () => {
+
   modal.classList.add("hidden");
+
 };
 
+
 $("#sendThought").onclick = () => {
+
   const v = text.value.trim();
 
   if (!v) return;
@@ -185,58 +329,138 @@ $("#sendThought").onclick = () => {
   addThought(v);
 
   text.value = "";
+
   modal.classList.add("hidden");
+
 };
 
-modal.addEventListener("click", e => {
-  if (e.target === modal) {
-    modal.classList.add("hidden");
+
+modal.addEventListener(
+  "click",
+  e => {
+
+    if (e.target === modal) {
+      modal.classList.add("hidden");
+    }
+
   }
-});
-
-// Compte à rebours
-function countdown() {
-  if (!reunion) {
-    $("#countdownValue").textContent =
-      "Ajoute une date dans « Nous »";
-    return;
-  }
-
-  const n = new Date(reunion) - Date.now();
-
-  if (n <= 0) {
-    $("#countdownValue").textContent =
-      "C’est le jour des retrouvailles ❤️";
-    return;
-  }
-
-  const s = Math.floor(n / 1000);
-  const d = Math.floor(s / 86400);
-  const h = Math.floor(s % 86400 / 3600);
-  const m = Math.floor(s % 3600 / 60);
-  const sec = s % 60;
-
-  $("#countdownValue").textContent =
-    `${d} j · ${String(h).padStart(2, "0")} h · ${String(m).padStart(2, "0")} min · ${String(sec).padStart(2, "0")} s`;
-}
-
-setInterval(countdown, 1000);
-countdown();
-render();
-
-document.querySelectorAll("[data-tab]").forEach(b =>
-  b.onclick = () =>
-    showToast("Cette section arrive dans la prochaine version 💕")
 );
 
-$("#menuBtn").onclick =
-  () => showToast("Menu — bientôt disponible");
 
-$("#profileBtn").onclick =
-  () => showToast("Profil — bientôt disponible");
+// ==============================
+// COMPTE A REBOURS
+// ==============================
+
+function countdown() {
+
+  if (!reunion) {
+
+    $("#countdownValue").textContent =
+      "Ajoute une date dans « Nous »";
+
+    return;
+  }
+
+
+  const n =
+    new Date(reunion) - Date.now();
+
+
+  if (n <= 0) {
+
+    $("#countdownValue").textContent =
+      "C’est le jour des retrouvailles ❤️";
+
+    return;
+  }
+
+
+  const s =
+    Math.floor(n / 1000);
+
+  const d =
+    Math.floor(s / 86400);
+
+  const h =
+    Math.floor((s % 86400) / 3600);
+
+  const m =
+    Math.floor((s % 3600) / 60);
+
+  const sec =
+    s % 60;
+
+
+  $("#countdownValue").textContent =
+    `${d} j · ` +
+    `${String(h).padStart(2, "0")} h · ` +
+    `${String(m).padStart(2, "0")} min · ` +
+    `${String(sec).padStart(2, "0")} s`;
+}
+
+
+setInterval(
+  countdown,
+  1000
+);
+
+countdown();
+
+render();
+
+
+// ==============================
+// AUTRES BOUTONS
+// ==============================
+
+document
+  .querySelectorAll("[data-tab]")
+  .forEach(b => {
+
+    b.onclick = () => {
+
+      showToast(
+        "Cette section arrive dans la prochaine version 💕"
+      );
+
+    };
+
+  });
+
+
+$("#menuBtn").onclick = () => {
+
+  showToast(
+    "Menu — bientôt disponible"
+  );
+
+};
+
+
+$("#profileBtn").onclick = () => {
+
+  showToast(
+    "Profil — bientôt disponible"
+  );
+
+};
+
+
+// ==============================
+// SERVICE WORKER
+// ==============================
 
 if ("serviceWorker" in navigator) {
+
   navigator.serviceWorker
     .register("sw.js")
-    .catch(() => {});
-}
+    .catch(error => {
+
+      console.error(
+        "Erreur Service Worker :",
+        error
+      );
+
+    });
+
+  }
