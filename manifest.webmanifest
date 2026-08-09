@@ -1,0 +1,10 @@
+{
+  "name":"Pensée à toi",
+  "short_name":"Pensée à toi",
+  "lang":"fr-FR",
+  "start_url":".",
+  "display":"standalone",
+  "background_color":"#070711",
+  "theme_color":"#ef397f",
+  "icons":[]
+}
