@@ -31,7 +31,21 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+  getAuth,
+  signInAnonymously
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
 const db = getFirestore(window.firebaseApp);
+const auth = getAuth(window.firebaseApp);
+
+signInAnonymously(auth)
+  .then(() => {
+    console.log("Utilisateur Firebase connecté");
+  })
+  .catch(error => {
+    console.error("Erreur authentification :", error);
+  });
 
 function timeAgo(ts) {
   const d = ts instanceof Date ? ts : new Date(ts);
