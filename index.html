@@ -70,7 +70,21 @@
 
 <div class="toast" id="toast"></div>
 <div class="hearts" id="hearts"></div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyAAf1CFU2T98ASCFKxPQKEwWg4CcE1u1xI",
+    authDomain: "penseeatoi-fb1eb.firebaseapp.com",
+    projectId: "penseeatoi-fb1eb",
+    storageBucket: "penseeatoi-fb1eb.firebasestorage.app",
+    messagingSenderId: "370911297190",
+    appId: "1:370911297190:web:89a492c03196e1e3233e67"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.firebaseApp = app;
+</script>
 <script src="app.js"></script>
 </body>
 </html>
