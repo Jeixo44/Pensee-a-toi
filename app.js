@@ -23,9 +23,9 @@ if (!SENDER) {
 }
 
 
-// ==============================
+// ========================================
 // FIREBASE
-// ==============================
+// ========================================
 
 import {
   getFirestore,
@@ -48,94 +48,144 @@ const db = getFirestore(window.firebaseApp);
 const auth = getAuth(window.firebaseApp);
 
 
-// ==============================
+// ========================================
 // AUTHENTIFICATION
-// ==============================
+// ========================================
 
 const authReady = signInAnonymously(auth)
   .then(() => {
-    console.log("Firebase : utilisateur connecté");
+
+    console.log(
+      "Firebase : utilisateur connecté"
+    );
+
   })
   .catch(error => {
-    console.error("Erreur authentification :", error);
+
+    console.error(
+      "Erreur authentification :",
+      error
+    );
+
     throw error;
+
   });
 
 
-// ==============================
+// ========================================
 // REJOINDRE LE COUPLE
-// ==============================
+// ========================================
 
-const joinButton = $("#joinCoupleBtn");
-const codeInput = $("#coupleCodeInput");
-const coupleStatus = $("#coupleStatus");
+const joinButton =
+  $("#joinCoupleBtn");
+
+const codeInput =
+  $("#coupleCodeInput");
+
+const coupleStatus =
+  $("#coupleStatus");
 
 
 if (joinButton) {
 
   joinButton.onclick = async () => {
 
-    const code = codeInput.value.trim();
+    const code =
+      codeInput.value.trim();
+
 
     if (!code) {
+
       coupleStatus.textContent =
         "Entre le code de votre couple ❤️";
+
       return;
     }
+
 
     try {
 
       coupleStatus.textContent =
-        "Vérification du code...";
+        "Connexion à Firebase...";
+
 
       await authReady;
 
 
       console.log(
-        "Recherche Firestore : couples/couple1"
+        "Firebase connecté"
       );
 
 
+      console.log(
+        "Projet Firebase :",
+        "penseeatoi-fb1eb"
+      );
+
+
+      console.log(
+        "Recherche : couples/couple1"
+      );
+
+
+      // IMPORTANT :
+      // Collection : couples
+      // Document : couple1
+
       const coupleRef =
-        doc(db, "couples", "couple1");
+        doc(
+          db,
+          "couples",
+          "couple1"
+        );
 
 
-      const coupleSnapshot =
+      const snapshot =
         await getDoc(coupleRef);
 
 
       console.log(
         "Document trouvé :",
-        coupleSnapshot.exists()
+        snapshot.exists()
       );
 
 
-      if (!coupleSnapshot.exists()) {
-
-        console.error(
-          "Le document couples/couple1 est introuvable."
-        );
+      if (!snapshot.exists()) {
 
         coupleStatus.textContent =
-          "Le document couple1 est introuvable dans Firestore.";
+          "Firebase ne trouve pas couples/couple1.";
+
+        console.error(
+          "DOCUMENT INTROUVABLE : couples/couple1"
+        );
 
         return;
       }
 
 
-      const coupleData =
-        coupleSnapshot.data();
+      const data =
+        snapshot.data();
 
 
       console.log(
-        "Données du couple :",
-        coupleData
+        "Données Firestore :",
+        data
       );
 
 
-      // Ton champ Firestore s'appelle "Code"
+      // Ton champ Firestore est bien "Code"
       const firestoreCode =
-        String(coupleData.Code || "").trim();
+        String(
+          data.Code || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+      const enteredCode =
+        String(code)
+        .trim()
+        .toLowerCase();
 
 
       console.log(
@@ -146,13 +196,12 @@ if (joinButton) {
 
       console.log(
         "Code entré :",
-        code
+        enteredCode
       );
 
 
       if (
-        firestoreCode.toLowerCase()
-        !== code.toLowerCase()
+        firestoreCode !== enteredCode
       ) {
 
         coupleStatus.textContent =
@@ -162,8 +211,12 @@ if (joinButton) {
       }
 
 
-      // Code correct
-      COUPLE_ID = "couple1";
+      // ====================================
+      // COUPLE VALIDÉ
+      // ====================================
+
+      COUPLE_ID =
+        "couple1";
 
 
       localStorage.setItem(
@@ -172,11 +225,29 @@ if (joinButton) {
       );
 
 
-      // Afficher les noms du couple
-      if (coupleData.Partner1) {
+      // Afficher les partenaires
+
+      if ($("#partnerLabel")) {
+
+        const partner1 =
+          data.Partner1 || "Vincent";
+
+        const partner2 =
+          data.Partner2 || "Ma chérie";
+
 
         $("#partnerLabel").textContent =
-          `${coupleData.Partner1} ❤️ ${coupleData.Partner2 || ""}`;
+          `${partner1} ❤️ ${partner2}`;
+
+      }
+
+
+      // Afficher la date si elle existe
+
+      if (data.Partner3) {
+
+        reunion =
+          data.Partner3;
 
       }
 
@@ -190,19 +261,26 @@ if (joinButton) {
       );
 
 
+      // Charger les pensées
+
       startThoughtListener();
 
+    }
 
-    } catch (error) {
+    catch (error) {
 
       console.error(
-        "Erreur complète :",
+        "ERREUR FIREBASE :",
         error
       );
 
 
       coupleStatus.textContent =
-        "Erreur de connexion à Firebase.";
+        "Erreur Firebase : " +
+        (
+          error.message ||
+          "erreur inconnue"
+        );
 
     }
 
@@ -211,9 +289,9 @@ if (joinButton) {
 }
 
 
-// ==============================
+// ========================================
 // TEMPS
-// ==============================
+// ========================================
 
 function timeAgo(ts) {
 
@@ -222,132 +300,195 @@ function timeAgo(ts) {
       ? ts
       : new Date(ts);
 
+
   const now =
     new Date();
 
+
   const m =
-    Math.floor((now - d) / 60000);
+    Math.floor(
+      (now - d) / 60000
+    );
 
 
-  return m < 1
-    ? "À l’instant"
-    : m < 60
-      ? `Il y a ${m} min`
-      : m < 1440
-        ? `Il y a ${Math.floor(m / 60)} h`
-        : d.toLocaleDateString("fr-FR");
+  if (m < 1) {
+
+    return "À l’instant";
+
+  }
+
+
+  if (m < 60) {
+
+    return `Il y a ${m} min`;
+
+  }
+
+
+  if (m < 1440) {
+
+    return `Il y a ${Math.floor(m / 60)} h`;
+
+  }
+
+
+  return d.toLocaleDateString(
+    "fr-FR"
+  );
+
 }
 
 
-// ==============================
+// ========================================
 // SECURITE HTML
-// ==============================
+// ========================================
 
 function escapeHtml(s) {
 
   return String(s).replace(
     /[&<>"']/g,
     m => ({
+
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#039;"
+
     }[m])
   );
 
 }
 
 
-// ==============================
-// AFFICHAGE
-// ==============================
+// ========================================
+// AFFICHER LES PENSEES
+// ========================================
 
 function render() {
 
+  if (!list) {
+    return;
+  }
+
+
+  if (!thoughts.length) {
+
+    list.innerHTML = `
+
+      <div class="thought-item">
+
+        <span class="heart">
+          💭
+        </span>
+
+        <div>
+
+          <b>
+            Aucune pensée pour le moment
+          </b>
+
+          <small>
+            Envoie la première ❤️
+          </small>
+
+        </div>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
   list.innerHTML =
-    thoughts.length
-
-      ? thoughts
-          .slice(0, 8)
-          .map(t => `
-
-            <div class="thought-item">
-
-              <span class="heart">
-                💗
-              </span>
-
-              <div>
-
-                <b>
-                  ${escapeHtml(t.text)}
-                </b>
-
-                <small>
-                  ${t.sender
-                    ? escapeHtml(t.sender) + " · "
-                    : ""}
-                  ${timeAgo(t.ts)}
-                </small>
-
-              </div>
-
-            </div>
-
-          `)
-          .join("")
-
-      : `
+    thoughts
+      .slice(0, 8)
+      .map(t => `
 
         <div class="thought-item">
 
           <span class="heart">
-            💭
+            💗
           </span>
 
           <div>
 
             <b>
-              Aucune pensée pour le moment
+              ${escapeHtml(t.text)}
             </b>
 
             <small>
-              Envoie la première ❤️
+
+              ${
+                t.sender
+                  ? escapeHtml(t.sender) + " · "
+                  : ""
+              }
+
+              ${timeAgo(t.ts)}
+
             </small>
 
           </div>
 
         </div>
 
-      `;
+      `)
+      .join("");
+
 }
 
 
-// ==============================
+// ========================================
 // MESSAGE
-// ==============================
+// ========================================
 
 function showToast(s) {
+
+  if (!toast) {
+    return;
+  }
+
 
   toast.textContent =
     s;
 
-  toast.classList.add("show");
+
+  toast.classList.add(
+    "show"
+  );
+
 
   setTimeout(
-    () => toast.classList.remove("show"),
+    () => {
+
+      toast.classList.remove(
+        "show"
+      );
+
+    },
     2200
   );
 
 }
 
 
-// ==============================
-// COEURS
-// ==============================
+// ========================================
+// ANIMATION COEURS
+// ========================================
 
 function popHearts() {
+
+  const container =
+    $("#hearts");
+
+
+  if (!container) {
+    return;
+  }
+
 
   for (
     let i = 0;
@@ -356,10 +497,14 @@ function popHearts() {
   ) {
 
     const h =
-      document.createElement("span");
+      document.createElement(
+        "span"
+      );
+
 
     h.className =
       "heart-pop";
+
 
     h.textContent =
       [
@@ -371,20 +516,29 @@ function popHearts() {
 
 
     h.style.left =
-      (35 + Math.random() * 30) + "%";
+      (
+        35 +
+        Math.random() * 30
+      ) + "%";
 
 
     h.style.top =
-      (42 + Math.random() * 12) + "%";
+      (
+        42 +
+        Math.random() * 12
+      ) + "%";
 
 
     h.style.setProperty(
       "--x",
-      (Math.random() * 180 - 90) + "px"
+      (
+        Math.random() * 180 -
+        90
+      ) + "px"
     );
 
 
-    $("#hearts").appendChild(h);
+    container.appendChild(h);
 
 
     setTimeout(
@@ -397,9 +551,9 @@ function popHearts() {
 }
 
 
-// ==============================
+// ========================================
 // ENVOYER UNE PENSEE
-// ==============================
+// ========================================
 
 async function addThought(t) {
 
@@ -409,6 +563,7 @@ async function addThought(t) {
 
 
     await addDoc(
+
       collection(
         db,
         "couples",
@@ -417,10 +572,15 @@ async function addThought(t) {
       ),
 
       {
+
         text: t,
+
         sender: SENDER,
+
         createdAt: new Date()
+
       }
+
     );
 
 
@@ -431,10 +591,12 @@ async function addThought(t) {
 
     popHearts();
 
-  } catch (error) {
+  }
+
+  catch (error) {
 
     console.error(
-      "Erreur lors de l'envoi :",
+      "Erreur envoi pensée :",
       error
     );
 
@@ -448,9 +610,9 @@ async function addThought(t) {
 }
 
 
-// ==============================
+// ========================================
 // PENSEES EN TEMPS REEL
-// ==============================
+// ========================================
 
 let unsubscribeThoughts = null;
 
@@ -458,19 +620,30 @@ let unsubscribeThoughts = null;
 function startThoughtListener() {
 
   if (unsubscribeThoughts) {
+
     unsubscribeThoughts();
+
   }
+
+
+  console.log(
+    "Chargement des pensées de :",
+    COUPLE_ID
+  );
+
+
+  const thoughtsRef =
+    collection(
+      db,
+      "couples",
+      COUPLE_ID,
+      "thoughts"
+    );
 
 
   const thoughtsQuery =
     query(
-      collection(
-        db,
-        "couples",
-        COUPLE_ID,
-        "thoughts"
-      ),
-
+      thoughtsRef,
       orderBy(
         "createdAt",
         "desc"
@@ -519,7 +692,7 @@ function startThoughtListener() {
       error => {
 
         console.error(
-          "Erreur Firestore :",
+          "Erreur lecture Firestore :",
           error
         );
 
@@ -535,33 +708,43 @@ function startThoughtListener() {
 }
 
 
-// ==============================
-// BOUTON PRINCIPAL
-// ==============================
+// ========================================
+// BOUTON JE PENSE À TOI
+// ========================================
 
-$("#thinkBtn").onclick =
-  () => {
-
-    addThought(
-      "Je pense à toi ❤️"
-    );
-
-  };
+const thinkButton =
+  $("#thinkBtn");
 
 
-// ==============================
+if (thinkButton) {
+
+  thinkButton.onclick =
+    () => {
+
+      addThought(
+        "Je pense à toi ❤️"
+      );
+
+    };
+
+}
+
+
+// ========================================
 // PENSEES RAPIDES
-// ==============================
+// ========================================
 
 document
-  .querySelectorAll("[data-thought]")
-  .forEach(b => {
+  .querySelectorAll(
+    "[data-thought]"
+  )
+  .forEach(button => {
 
-    b.onclick =
+    button.onclick =
       () => {
 
         addThought(
-          b.dataset.thought
+          button.dataset.thought
         );
 
       };
@@ -569,82 +752,136 @@ document
   });
 
 
-// ==============================
+// ========================================
 // PENSEE PERSONNALISEE
-// ==============================
+// ========================================
 
-$("#customBtn").onclick =
-$("#plusBtn").onclick =
-  () => {
+const customButton =
+  $("#customBtn");
 
-    modal.classList.remove(
-      "hidden"
-    );
+const plusButton =
+  $("#plusBtn");
 
+
+function openModal() {
+
+  if (!modal) {
+    return;
+  }
+
+
+  modal.classList.remove(
+    "hidden"
+  );
+
+
+  if (text) {
     text.focus();
+  }
 
-  };
-
-
-$("#closeModal").onclick =
-  () => {
-
-    modal.classList.add(
-      "hidden"
-    );
-
-  };
+}
 
 
-$("#sendThought").onclick =
-  () => {
+if (customButton) {
 
-    const v =
-      text.value.trim();
+  customButton.onclick =
+    openModal;
 
-
-    if (!v) return;
+}
 
 
-    addThought(v);
+if (plusButton) {
+
+  plusButton.onclick =
+    openModal;
+
+}
 
 
-    text.value =
-      "";
+if ($("#closeModal")) {
 
-
-    modal.classList.add(
-      "hidden"
-    );
-
-  };
-
-
-modal.addEventListener(
-  "click",
-  e => {
-
-    if (e.target === modal) {
+  $("#closeModal").onclick =
+    () => {
 
       modal.classList.add(
         "hidden"
       );
 
+    };
+
+}
+
+
+if ($("#sendThought")) {
+
+  $("#sendThought").onclick =
+    () => {
+
+      const v =
+        text.value.trim();
+
+
+      if (!v) {
+        return;
+      }
+
+
+      addThought(v);
+
+
+      text.value =
+        "";
+
+
+      modal.classList.add(
+        "hidden"
+      );
+
+    };
+
+}
+
+
+if (modal) {
+
+  modal.addEventListener(
+    "click",
+    e => {
+
+      if (
+        e.target === modal
+      ) {
+
+        modal.classList.add(
+          "hidden"
+        );
+
+      }
+
     }
+  );
 
-  }
-);
+}
 
 
-// ==============================
-// COMPTE A REBOURS
-// ==============================
+// ========================================
+// COMPTE À REBOURS
+// ========================================
 
 function countdown() {
 
+  const element =
+    $("#countdownValue");
+
+
+  if (!element) {
+    return;
+  }
+
+
   if (!reunion) {
 
-    $("#countdownValue").textContent =
+    element.textContent =
       "Ajoute une date dans « Nous »";
 
     return;
@@ -653,12 +890,13 @@ function countdown() {
 
 
   const n =
-    new Date(reunion) - Date.now();
+    new Date(reunion)
+    - Date.now();
 
 
   if (n <= 0) {
 
-    $("#countdownValue").textContent =
+    element.textContent =
       "C’est le jour des retrouvailles ❤️";
 
     return;
@@ -669,24 +907,30 @@ function countdown() {
   const s =
     Math.floor(n / 1000);
 
+
   const d =
-    Math.floor(s / 86400);
+    Math.floor(
+      s / 86400
+    );
+
 
   const h =
     Math.floor(
       (s % 86400) / 3600
     );
 
+
   const m =
     Math.floor(
       (s % 3600) / 60
     );
 
+
   const sec =
     s % 60;
 
 
-  $("#countdownValue").textContent =
+  element.textContent =
     `${d} j · ` +
     `${String(h).padStart(2, "0")} h · ` +
     `${String(m).padStart(2, "0")} min · ` +
@@ -700,20 +944,21 @@ setInterval(
   1000
 );
 
+
 countdown();
 
-render();
 
-
-// ==============================
+// ========================================
 // NAVIGATION
-// ==============================
+// ========================================
 
 document
-  .querySelectorAll("[data-tab]")
-  .forEach(b => {
+  .querySelectorAll(
+    "[data-tab]"
+  )
+  .forEach(button => {
 
-    b.onclick =
+    button.onclick =
       () => {
 
         showToast(
@@ -725,29 +970,37 @@ document
   });
 
 
-$("#menuBtn").onclick =
-  () => {
+if ($("#menuBtn")) {
 
-    showToast(
-      "Menu — bientôt disponible"
-    );
+  $("#menuBtn").onclick =
+    () => {
 
-  };
+      showToast(
+        "Menu — bientôt disponible"
+      );
 
+    };
 
-$("#profileBtn").onclick =
-  () => {
-
-    showToast(
-      "Profil — bientôt disponible"
-    );
-
-  };
+}
 
 
-// ==============================
+if ($("#profileBtn")) {
+
+  $("#profileBtn").onclick =
+    () => {
+
+      showToast(
+        "Profil — bientôt disponible"
+      );
+
+    };
+
+}
+
+
+// ========================================
 // SERVICE WORKER
-// ==============================
+// ========================================
 
 if (
   "serviceWorker" in navigator
@@ -755,22 +1008,26 @@ if (
 
   navigator.serviceWorker
     .register("sw.js")
-    .catch(
-      error => {
+    .catch(error => {
 
-        console.error(
-          "Erreur Service Worker :",
-          error
-        );
+      console.error(
+        "Erreur Service Worker :",
+        error
+      );
 
-      }
-    );
+    });
 
 }
 
 
-// ==============================
-// DEMARRAGE
-// ==============================
+// ========================================
+// AFFICHAGE INITIAL
+// ========================================
+
+render();
+
+
+// On charge les pensées du couple
+// déjà mémorisé sur le téléphone.
 
 startThoughtListener();
